@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Backend Server",
+			"type": "shell",
+			"command": "cd /home/kapil/Desktop/ElectInfo/server && npm run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

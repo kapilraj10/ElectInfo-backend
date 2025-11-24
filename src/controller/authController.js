@@ -42,7 +42,7 @@ export const registerUser = async (req, res) => {
             userName: savedUser.userName,
             email: savedUser.email,
             role: savedUser.role,
-            token: generateToken(savedUser._id),
+            token: generateToken(savedUser._id, { role: savedUser.role }),
             message: "User registered successfully"
         });
 
@@ -52,29 +52,41 @@ export const registerUser = async (req, res) => {
     }
 };
 
-export const loginUser = async (req, res) =>{
-    const {userName, password, email, role} = req.body;
-    const user = await User.findOne({
-        userName
-    });
-    if(!user){
-        return res.status(400).json({
-            message:"Invalid username "
-        })
-    }
-    const isMatch = await bcrypt.compare(password, user.password);
-    if(!isMatch){
-        return res.status(400).json({
-            message:"Invalid password"
-        })
-    }
+export const loginUser = async (req, res) => {
+    try {
+        const { userName, password, email } = req.body;
 
-    res.status(200).json({
-        _id: user._id,
-        userName: user.userName,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id),
-        message: "User logged in successfully"
-    })
-}
+        // Find user by email OR username
+        const user = await User.findOne({
+            $or: [
+                { email: email || userName },
+                { userName: userName || email }
+            ]
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid credentials"
+            });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({
+                message: "Invalid credentials"
+            });
+        }
+
+        res.status(200).json({
+            _id: user._id,
+            userName: user.userName,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user._id, { role: user.role }),
+            message: "User logged in successfully"
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
